@@ -3,7 +3,7 @@ services:
   master-hadoop:
     restart: always
     image: n454149301/centos-openssh-openjdk-hadoop:3.2.1
-    hostname: hadoop-master
+    hostname: hadoop-slave2
     ports:
         # ssh port
         - '10022:10022'
@@ -25,24 +25,15 @@ services:
         - '9866:9866'
         # webhdfs server
         - '9900:9900'
+    environment:
+      - zookeeper_my_id=3
+    extra_hosts:
+      - "hadoop-master:192.168.1.100"
+      - "hadoop-slave1:192.168.1.101"
     volumes:
       - ./ssh:/root/.ssh
       - ./zookeeper/data:/root/zookeeper/data
       - ./zookeeper/logs:/root/zookeeper/logs
       - ./hadoop/dfs:/root/hadoop/dfs
       - ./hadoop/logs:/root/hadoop/logs
-      - ./hosts:/etc/ansible/hosts
-      - ./start.yml:/root/start.yml
-      - ./template.j2:/root/template.j2
-    environment:
-      - zookeeper_my_id=2
-    extra_hosts:
-      - "hadoop-slave1:192.168.1.101"
-      - "hadoop-slave2:192.168.1.102"
-    command: 
-      - 'ansible-playbook'
-      - '-b'
-      - '-v'
-      - "--scp-extra-args '-P10022'"
-      - "--ssh-extra-args '-p10022'"
-      - /root/start.yml
+    command: tail -f /dev/null
