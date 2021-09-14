@@ -11,7 +11,7 @@ syncLimit={{zookeeper_syncLimit | default(5)}}
 # example sakes.
 dataDir=/root/zookeeper/data
 # the port at which the clients will connect
-clientPort={{zookeeper_clientPort | default(2181)}}
+clientPort={{zookeeper_client_port | default(2181)}}
 # the maximum number of client connections.
 # increase this if you need to handle more clients
 #maxClientCnxns=60
@@ -27,8 +27,10 @@ clientPort={{zookeeper_clientPort | default(2181)}}
 # Set to "0" to disable auto purge feature
 #autopurge.purgeInterval=1
 
+maxClientCnxns=600
+
 quorumListenOnAllIPs=true
 
-{% for client in zookeeper_clients %}
-server.{{client.id}}={{client.public_ip}}:{{client.follower_port | default(2888)}}:{{client.election_port | default(3888)}}
+{% for client in hostvars %}
+server.{{hostvars[client].zookeeper_my_id}}={{hostvars[client].inventory_hostname}}:{{hostvars[client].zookeeper_follower_port | default(2888)}}:{{hostvars[client].zookeeper_election_port | default(3888)}}
 {%endfor%}

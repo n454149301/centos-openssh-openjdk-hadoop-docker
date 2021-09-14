@@ -23,17 +23,23 @@ services:
         - '8480:8480'
         # datanode server
         - '9866:9866'
+        # yarn server
+        - '8032:8032'
         # webhdfs server
         - '9900:9900'
-    environment:
-      - zookeeper_my_id=2
+        # jobhistory server
+        - '10020:10020'
+        # mapreduce_job_client_port_range
+        - '50000-50100:50000-50100'
     extra_hosts:
       - "hadoop-master:192.168.1.100"
       - "hadoop-slave2:192.168.1.102"
     volumes:
+      - '/etc/localtime:/etc/localtime:ro'
       - ./ssh:/root/.ssh
       - ./zookeeper/data:/root/zookeeper/data
       - ./zookeeper/logs:/root/zookeeper/logs
       - ./hadoop/dfs:/root/hadoop/dfs
       - ./hadoop/logs:/root/hadoop/logs
+      - ./hadoop/tmp:/root/hadoop/tmp
     command: tail -f /dev/null

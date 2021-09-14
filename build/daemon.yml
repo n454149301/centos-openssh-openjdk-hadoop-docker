@@ -1,0 +1,22 @@
+---
+# 执行一次hadoop daemon，把命令都执行一遍，允许重复执行会检查是否已经存活的程序
+- hosts: 'hadoop'
+  ignore_unreachable: no
+  any_errors_fatal: true
+  remote_user: 'root'
+  become: false
+  environment:
+    JAVA_HOME: /root/openjdk
+  tasks:
+    - name: 'check all'
+      ping:
+    - name: 'start zookeeper'
+      shell: '/root/zookeeper/bin/zkServer.sh start; exit 0'
+    - name: 'check all NameNode'
+      shell: '/root/openjdk/bin/jps | grep NameNode'
+    - name: 'check all DataNode'
+      shell: '/root/openjdk/bin/jps | grep DataNode'
+    - name: 'check all JournalNode'
+      shell: '/root/openjdk/bin/jps | grep JournalNode'
+    - name: 'check all NodeManager'
+      shell: '/root/openjdk/bin/jps | grep NodeManager'

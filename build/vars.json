@@ -1,0 +1,160 @@
+{
+	"zookeeper_tickTime": 2000,
+	"zookeeper_initLimit": 10,
+	"zookeeper_syncLimit": 5,
+	"zookeeper_client_port": 2181,
+	"zookeeper_follower_port": 2888,
+	"zookeeper_election_port": 3888,
+	"hadoop_env_demo_path": "/root/hadoop/etc/hadoop/hadoop-env.demo.sh",
+	"httpfs_env_demo_path": "/root/hadoop/etc/hadoop/httpfs-env.demo.sh",
+	"hadoop_etc_xml": {
+		"/root/hadoop/etc/hadoop/core-site.xml": [
+			{
+				"name": "fs.defaultFS",
+				"value": "hdfs://hdfscluster"
+			},
+			{
+				"name": "hadoop.tmp.dir",
+				"value": "/root/hadoop/tmp"
+			},
+			{
+				"name": "fs.trash.interval",
+				"value": "1440"
+			},
+			{
+				"name": "hadoop.proxyuser.root.hosts",
+				"value": "*"
+			},
+			{
+				"name": "hadoop.proxyuser.root.groups",
+				"value": "*"
+			},
+			{
+				"name": "hadoop.http.staticuser.user",
+				"value": "admin"
+			}
+		],
+		"/root/hadoop/etc/hadoop/hdfs-site.xml": [
+			{
+				"name": "dfs.nameservices",
+				"value":"hdfscluster"
+			},
+			{
+				"name": "dfs.datanode.address",
+				"value": "0.0.0.0:9866"
+			},
+			{
+				"name": "dfs.client.failover.proxy.provider.hdfscluster",
+				"value": "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider"
+			},
+			{
+				"name": "dfs.ha.fencing.methods",
+				"value": "sshfence"
+			},
+			{
+				"name": "dfs.ha.fencing.ssh.private-key-files",
+				"value": "/root/.ssh/id_rsa"
+			},
+			{
+				"name": "dfs.journalnode.edits.dir",
+				"value": "/root/hadoop/dfs/journal"
+			},
+			{
+				"name": "dfs.ha.automatic-failover.enabled",
+				"value": "true"
+			},
+			{
+				"name": "dfs.replication",
+				"value": "3"
+			},
+			{
+				"name": "dfs.permissions.enabled",
+				"value": "false"
+			},
+			{
+				"name": "dfs.namenode.name.dir",
+				"value": "/root/hadoop/dfs/name"
+			},
+			{
+				"name": "dfs.datanode.data.dir",
+				"value": "/root/hadoop/dfs/data"
+			},
+			{
+				"name": "dfs.webhdfs.enabled",
+				"value": "true"
+			},
+			{
+				"name": "dfs.client.block.write.replace-datanode-on-failure.enable",
+				"value": "false"
+			},
+			{
+				"name": "dfs.client.block.write.replace-datanode-on-failure.policy",
+				"value": "DEFAULT"
+			},
+			{
+				"name": "dfs.support.append",
+				"value": "true"
+			},
+			{
+				"name": "dfs.journalnode.http-address",
+				"value": "0.0.0.0:8480"
+			},
+			{
+				"name": "dfs.journalnode.rpc-address",
+				"value": "0.0.0.0:8485"
+			},
+			{
+				"name": "dfs.namenode.datanode.registration.ip-hostname-check",
+				"value": "true"
+			},
+			{
+				"name": "dfs.datanode.use.datanode.hostname",
+				"value": "true"
+			},
+			{
+				"name": "dfs.datanode.synconclose",
+				"value": "true"
+			}
+		],
+		"/root/hadoop/etc/hadoop/mapred-site.xml": [
+			{
+				"name": "mapreduce.framework.name",
+				"value": "yarn"
+			},
+			{
+				"name": "yarn.app.mapreduce.am.env",
+				"value": "/root/hadoop/etc/hadoop:/root/hadoop/share/hadoop/common/lib/*:/root/hadoop/share/hadoop/common/*:/root/hadoop/share/hadoop/hdfs:/root/hadoop/share/hadoop/hdfs/lib/*:/root/hadoop/share/hadoop/hdfs/*:/root/hadoop/share/hadoop/mapreduce/lib/*:/root/hadoop/share/hadoop/mapreduce/*:/root/hadoop/share/hadoop/yarn:/root/hadoop/share/hadoop/yarn/lib/*:/root/hadoop/share/hadoop/yarn/*"
+			},
+			{
+				"name": "mapreduce.map.env",
+				"value": "/root/hadoop/etc/hadoop:/root/hadoop/share/hadoop/common/lib/*:/root/hadoop/share/hadoop/common/*:/root/hadoop/share/hadoop/hdfs:/root/hadoop/share/hadoop/hdfs/lib/*:/root/hadoop/share/hadoop/hdfs/*:/root/hadoop/share/hadoop/mapreduce/lib/*:/root/hadoop/share/hadoop/mapreduce/*:/root/hadoop/share/hadoop/yarn:/root/hadoop/share/hadoop/yarn/lib/*:/root/hadoop/share/hadoop/yarn/*"
+			},
+			{
+				"name": "mapreduce.reduce.env",
+				"value": "/root/hadoop/etc/hadoop:/root/hadoop/share/hadoop/common/lib/*:/root/hadoop/share/hadoop/common/*:/root/hadoop/share/hadoop/hdfs:/root/hadoop/share/hadoop/hdfs/lib/*:/root/hadoop/share/hadoop/hdfs/*:/root/hadoop/share/hadoop/mapreduce/lib/*:/root/hadoop/share/hadoop/mapreduce/*:/root/hadoop/share/hadoop/yarn:/root/hadoop/share/hadoop/yarn/lib/*:/root/hadoop/share/hadoop/yarn/*"
+			},
+			{
+				"name": "mapreduce.application.classpath",
+				"value": "/root/hadoop/etc/hadoop:/root/hadoop/share/hadoop/common/lib/*:/root/hadoop/share/hadoop/common/*:/root/hadoop/share/hadoop/hdfs:/root/hadoop/share/hadoop/hdfs/lib/*:/root/hadoop/share/hadoop/hdfs/*:/root/hadoop/share/hadoop/mapreduce/lib/*:/root/hadoop/share/hadoop/mapreduce/*:/root/hadoop/share/hadoop/yarn:/root/hadoop/share/hadoop/yarn/lib/*:/root/hadoop/share/hadoop/yarn/*"
+			},
+			{
+				"name": "mapreduce.jobhistory.address",
+				"value": "hadoop-master:10020"
+			},
+			{
+				"name": "yarn.app.mapreduce.am.job.client.port-range",
+				"value": "50000-50100"
+			}
+		],
+		"/root/hadoop/etc/hadoop/yarn-site.xml": [
+			{
+				"name": "yarn.nodemanager.aux-services",
+				"value": "mapreduce_shuffle"
+			},
+			{
+				"name": "yarn.nodemanager.env-whitelist",
+				"value": "JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME"
+			}
+		]
+	}
+}

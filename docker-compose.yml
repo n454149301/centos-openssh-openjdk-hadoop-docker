@@ -23,19 +23,23 @@ services:
         - '8480:8480'
         # datanode server
         - '9866:9866'
+        # yarn server
+        - '8032:8032'
         # webhdfs server
         - '9900:9900'
+        # jobhistory server
+        - '10020:10020'
+        # mapreduce_job_client_port_range
+        - '50000-50100:50000-50100'
     volumes:
+      - '/etc/localtime:/etc/localtime:ro'
       - ./ssh:/root/.ssh
       - ./zookeeper/data:/root/zookeeper/data
       - ./zookeeper/logs:/root/zookeeper/logs
       - ./hadoop/dfs:/root/hadoop/dfs
       - ./hadoop/logs:/root/hadoop/logs
+      - ./hadoop/tmp:/root/hadoop/tmp
       - ./hosts:/etc/ansible/hosts
-      - ./start.yml:/root/start.yml
-      - ./template.j2:/root/template.j2
-    environment:
-      - zookeeper_my_id=2
     extra_hosts:
       - "hadoop-slave1:192.168.1.101"
       - "hadoop-slave2:192.168.1.102"
@@ -43,6 +47,8 @@ services:
       - 'ansible-playbook'
       - '-b'
       - '-v'
-      - "--scp-extra-args '-P10022'"
-      - "--ssh-extra-args '-p10022'"
+      - '-e'
+      - '@vars.json'
+      - "--scp-extra-args='-P10022'"
+      - "--ssh-extra-args='-p10022'"
       - /root/start.yml

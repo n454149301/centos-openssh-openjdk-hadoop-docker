@@ -1,141 +1,27 @@
 ---
 # 初始化配置
 - hosts: 'hadoop'
+  ignore_unreachable: no
+  any_errors_fatal: true
   remote_user: 'root'
   become: false
   environment:
     JAVA_HOME: /root/openjdk
-  vars:
-    zookeeper_client_port: 2181
-    zookeeper_clients:
-      - node1:
-        id: 1
-        public_ip: 192.168.1.100
-        ip: 192.168.1.100
-        follower_port: 2888
-        election_port: 3888
-      - node2:
-        id: 2
-        public_ip: 192.168.1.101
-        ip: 192.168.1.101
-        follower_port: 2888
-        election_port: 3888
-      - node3:
-        id: 3
-        public_ip: 192.168.1.102
-        ip: 192.168.1.102
-        follower_port: 2888
-        election_port: 3888
-    hadoop_nodes:
-      - hadoop-master
-      - hadoop-slave1
-      - hadoop-slave2
-    hadoop_slaves:
-      - hadoop-slave1
-      - hadoop-slave2
-    hadoop_etc_xml:
-      /root/hadoop/etc/hadoop/core-site.xml: 
-        - property:
-          name: fs.defaultFS
-          value: hdfs://hdfscluster
-        - property:
-          name: hadoop.tmp.dir
-          value: /root/hadoop/tmp
-        - property:
-          name: fs.trash.interval
-          value: 1440
-        - property:
-          name: hadoop.proxyuser.root.hosts
-          value: '*'
-        - property:
-          name: hadoop.proxyuser.root.groups
-          value: '*'
-        - property:
-          name: hadoop.http.staticuser.user
-          value: admin
-      /root/hadoop/etc/hadoop/hdfs-site.xml: 
-        - property:
-          name: dfs.nameservices
-          value: hdfscluster
-        - property:
-          name: dfs.datanode.address
-          value: 0.0.0.0:9866
-        - property:
-          name: dfs.client.failover.proxy.provider.hdfscluster
-          value: org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider
-        - property:
-          name: dfs.ha.fencing.methods
-          value: sshfence
-        - property:
-          name: dfs.ha.fencing.ssh.private-key-files
-          value: /root/.ssh/id_rsa
-        - property:
-          name: dfs.journalnode.edits.dir
-          value: /root/hadoop/dfs/journal
-        - property:
-          name: dfs.ha.automatic-failover.enabled
-          value: true
-        - property:
-          name: dfs.replication
-          value: 3
-        - property:
-          name: dfs.permissions.enabled
-          value: false
-        - property:
-          name: dfs.namenode.name.dir
-          value: /root/hadoop/dfs/name
-        - property:
-          name: dfs.datanode.data.dir
-          value: /root/hadoop/dfs/data
-        - property:
-          name: dfs.webhdfs.enabled
-          value: true
-        - property:
-          name: dfs.client.block.write.replace-datanode-on-failure.enable
-          value: false
-        - property:
-          name: dfs.client.block.write.replace-datanode-on-failure.policy
-          value: DEFAULT
-        - property:
-          name: dfs.support.append
-          value: true
-        - property:
-          name: dfs.journalnode.http-address
-          value: 0.0.0.0:8480
-        - property:
-          name: dfs.journalnode.rpc-address
-          value: 0.0.0.0:8485
-        - property:
-          name: dfs.namenode.datanode.registration.ip-hostname-check
-          value: false
-      /root/hadoop/etc/hadoop/mapred-site.xml: 
-        - property:
-          name: mapreduce.framework.name
-          value: yarn
-      /root/hadoop/etc/hadoop/yarn-site.xml: 
-        - property:
-          name: yarn.nodemanager.aux-services
-          value: mapreduce_shuffle
-        - property:
-          name: yarn.nodemanager.env-whitelist
-          value: JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME
   tasks:
     - name: 'check all'
       ping:
-    - name: 'yum install xmlstarlet, test task'
-      yum: 
-        name: xmlstarlet
-        state: latest
-    - name: 'set zookeeper ip arr'
-      shell: echo {% for client in zookeeper_clients %}{{client.public_ip}}:{{zookeeper_client_port}} {%endfor%}
-      register: zookeeper_clients_ip_arr
+      ignore_errors: no
+    - debug: var=zookeeper_my_id
     # 初始化配置zookeeper
     - name: 'zookeeper client port'
       template:
         src: /root/template.j2/zookeeper/zoo.cfg.j2
         dest: /root/zookeeper/conf/zoo.cfg
+    - name: 'set zookeeper ip arr'
+      shell: echo {% for client in groups["hadoop"] %}{{client}}:{{zookeeper_client_port}} {%endfor%}
+      register: zookeeper_clients_ip_arr
     - name: 'zookeeper node id'
-      shell: cat /proc/1/environ | tr '\0' '\n' | grep zookeeper_my_id | awk -F'=' '{print $2}' > /root/zookeeper/data/myid
+      shell: echo {{zookeeper_my_id}} > /root/zookeeper/data/myid
     - name: 'hadoop core-site.xml 特殊配置'
       shell:
         xmlstarlet ed -L -d '/configuration/*' /root/hadoop/etc/hadoop/core-site.xml;
@@ -143,10 +29,10 @@
         xmlstarlet ed -L -s '/configuration/property[last()]' -t elem -n name -v 'ha.zookeeper.quorum' /root/hadoop/etc/hadoop/core-site.xml;
         xmlstarlet ed -L -s '/configuration/property[name="ha.zookeeper.quorum"]' -t elem -n value -v '{{zookeeper_clients_ip_arr.stdout.split(" ") | join(",")}}' /root/hadoop/etc/hadoop/core-site.xml;
     - name: 'set hdfs-site namenodes.hdfscluster'
-      shell: echo {% for node in hadoop_nodes %}nn{{loop.index}} {%endfor%}
+      shell: echo {% for node in groups["hadoop"] %}nn{{loop.index}} {%endfor%}
       register: hdfs_namenodes_hdfscluster
     - name: 'set hdfs-site namenode.shared.edits.dir'
-      shell: echo {% for node in hadoop_nodes %}{{node}}:8485 {%endfor%}
+      shell: echo {% for node in groups["hadoop"] %}{{node}}:8485 {%endfor%}
       register: hdfs_namenode_shared_edits_dir
     - name: 'hadoop hdfs-site.xml 特殊配置'
       shell:
@@ -157,7 +43,7 @@
         xmlstarlet ed -L -s '/configuration' -t elem -n property -v '' /root/hadoop/etc/hadoop/hdfs-site.xml;
         xmlstarlet ed -L -s '/configuration/property[last()]' -t elem -n name -v 'dfs.namenode.shared.edits.dir' /root/hadoop/etc/hadoop/hdfs-site.xml;
         xmlstarlet ed -L -s '/configuration/property[name="dfs.namenode.shared.edits.dir"]' -t elem -n value -v 'qjournal://{{hdfs_namenode_shared_edits_dir.stdout.split(" ") | join(";")}}/hdfscluster' /root/hadoop/etc/hadoop/hdfs-site.xml;
-        {% for node in hadoop_nodes %}
+        {% for node in groups["hadoop"] %}
         xmlstarlet ed -L -s '/configuration' -t elem -n property -v '' /root/hadoop/etc/hadoop/hdfs-site.xml;
         xmlstarlet ed -L -s '/configuration/property[last()]' -t elem -n name -v 'dfs.namenode.rpc-address.hdfscluster.nn{{loop.index}}' /root/hadoop/etc/hadoop/hdfs-site.xml;
         xmlstarlet ed -L -s '/configuration/property[name="dfs.namenode.rpc-address.hdfscluster.nn{{loop.index}}"]' -t elem -n value -v '{{node}}:9820' /root/hadoop/etc/hadoop/hdfs-site.xml;
@@ -179,15 +65,23 @@
     - name: 'create workers'
       shell:
         echo '' > /root/hadoop/etc/hadoop/workers;
-        {% for node in hadoop_nodes %}
+        {% for node in groups["hadoop"] %}
         echo {{node}} >> /root/hadoop/etc/hadoop/workers;
         {%endfor%}
     - name: 'create slaves'
       shell:
         echo '' > /root/hadoop/etc/slaves;
-        {% for node in hadoop_slaves %}
+        {% for node in groups["hadoop"] %}
         echo {{node}} >> /root/hadoop/etc/slaves;
         {%endfor%}
+    - name: 'check found hadoop-env.demo.sh'
+      shell:
+        cp /root/hadoop/etc/hadoop/hadoop-env.demo.sh /root/hadoop/etc/hadoop/hadoop-env.sh
+      when: hadoop_env_demo_path is exists
+    - name: 'check found httpfs-env.demo.sh'
+      shell:
+        cp /root/hadoop/etc/hadoop/httpfs-env.demo.sh /root/hadoop/etc/hadoop/httpfs-env.sh
+      when: httpfs_env_demo_path is exists
     - name: 'insert hadoop environment'
       shell:
         echo 'export JAVA_HOME=/root/openjdk' >> /root/hadoop/etc/hadoop/hadoop-env.sh;
@@ -203,9 +97,14 @@
         echo 'export ZOOKEEPER_HOME=/root/zookeeper' >> /root/hadoop/etc/hadoop/hadoop-env.sh;
         echo 'export HDFS_ZKFC_USER=root' >> /root/hadoop/etc/hadoop/hadoop-env.sh;
         echo 'export HDFS_JOURNALNODE_USER=root' >> /root/hadoop/etc/hadoop/hadoop-env.sh;
-    - name: 'start zookeeper'
-      shell: '/root/zookeeper/bin/zkServer.sh start'
+        echo "" >> /root/hadoop/etc/hadoop/httpfs-env.sh;
+        echo 'export HTTPFS_HTTP_PORT=9900' >> /root/hadoop/etc/hadoop/httpfs-env.sh;
+        echo 'export HTTPFS_TEMP=$HADOOP_HOME/tmp' >> /root/hadoop/etc/hadoop/httpfs-env.sh;
+    - name: 'start zookeeper(因为可能出现子节点启动过的问题，强制正常退出)'
+      shell: '/root/zookeeper/bin/zkServer.sh start; exit 0'
 - hosts: "master"
+  ignore_unreachable: no
+  any_errors_fatal: true
   remote_user: root
   become: false
   environment:
@@ -215,12 +114,22 @@
       shell: '/root/hadoop/sbin/stop-all.sh'
     - name: 'start dfs'
       shell: '/root/hadoop/sbin/start-dfs.sh'
+    - name: 'wait 20s'
+      shell: 'sleep 20'
     - name: 'start yarn'
       shell: '/root/hadoop/sbin/start-yarn.sh'
+    - name: 'wait 20s'
+      shell: 'sleep 20'
     - name: 'start historyserver'
-      shell: '/root/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver'
+      shell: '/root/hadoop/bin/mapred --daemon start historyserver'
+    - name: 'wait 20s'
+      shell: 'sleep 20'
+    - name: 'set haadmin nn1 to active'
+      shell: 'yes | /root/hadoop/bin/hdfs haadmin -transitionToActive nn1 --forcemanual; exit 0'
+    - name: 'wait 20s'
+      shell: 'sleep 20'
     - name: 'start httpfs.sh'
-      shell: '/root/hadoop/sbin/httpfs.sh start'
+      shell: '/root/hadoop/bin/hdfs --daemon start httpfs'
     # 结束
-    - name: 'wait'
-      shell: 'tail -f /dev/null'
+    - name: 'wait while check daemon.sh'
+      shell: '/root/daemon.sh'
